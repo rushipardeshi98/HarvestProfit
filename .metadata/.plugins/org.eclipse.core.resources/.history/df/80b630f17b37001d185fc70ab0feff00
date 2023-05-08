@@ -1,0 +1,71 @@
+package com.cdac.controller;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.cdac.Entity.FarmersClass;
+import com.cdac.Entity.FarmgoodsClass;
+import com.cdac.service.FarmerService;
+import com.cdac.service.UserService;
+
+@RestController
+public class FarmerController {
+
+	FarmersClass signedfarmer = null;
+	
+	@Autowired
+	private FarmerService farmerservice;
+	
+	@Autowired
+	private UserService userservice;
+	
+	@Autowired
+	private UserController userctr;
+	
+	@PostMapping("/addgoods")
+	public void AddGoods(@Valid @RequestBody FarmgoodsClass farmgoods, HttpServletRequest request) {
+		
+		System.out.println("Adding goods");
+		String email = userctr.getcookievalue("useremail", request);
+		signedfarmer=farmerservice.getFarmer(userservice.fetchuser(email));	
+		
+		farmgoods.setFarmer(signedfarmer);
+		farmerservice.addFarmGoods(farmgoods);	  	  
+	}
+	
+	@GetMapping("/viewgoods")
+	public List<FarmgoodsClass> ViewGoods(HttpServletRequest request) {
+
+		
+		if(signedfarmer==null) {
+		String email = userctr.getcookievalue("useremail", request);
+		signedfarmer=farmerservice.getFarmer(userservice.fetchuser(email));}
+		
+		List<FarmgoodsClass> list = farmerservice.getGoods(signedfarmer);
+		
+		 List<FarmgoodsClass> list1= new ArrayList<>();
+		 FarmgoodsClass goods = new FarmgoodsClass();
+		
+		 for (FarmgoodsClass farmgoodsClass : list) {
+		  goods.setGoodsName(farmgoodsClass.getGoodsName());
+		  goods.setExpectedPrice(farmgoodsClass.getExpectedPrice());
+		  goods.setQuantity(farmgoodsClass.getQuantity());
+		  goods.setFarmer(farmgoodsClass.getFarmer());
+		  list1.add(goods);
+		 }
+		 			  
+		return list1;
+	}
+}
+	
+
